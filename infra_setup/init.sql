@@ -1,60 +1,66 @@
-
--- Create schema
+-- Create schema if it does not exist
 CREATE SCHEMA IF NOT EXISTS ALT_SCHOOL;
 
-
--- create and populate tables
-create table if not exists ALT_SCHOOL.PRODUCTS
+-- Create and populate PRODUCTS table
+CREATE TABLE IF NOT EXISTS ALT_SCHOOL.PRODUCTS
 (
-    id  serial primary key,
-    name varchar not null,
-    price numeric(10, 2) not null
+    id SERIAL PRIMARY KEY, -- Unique identifier for each product
+    name VARCHAR(255) NOT NULL, -- Name of the product, limit length to 255 characters
+    price NUMERIC(10, 2) NOT NULL -- Price of the product with precision of 10 digits and 2 decimal places
 );
 
-
+-- Import data into PRODUCTS table from a CSV file
 COPY ALT_SCHOOL.PRODUCTS (id, name, price)
-FROM '/data/products.csv' DELIMITER ',' CSV HEADER;
+FROM 'C:\Users\HP\Downloads\products.csv' DELIMITER ',' CSV HEADER; -- Importing data from CSV with comma delimiter and header
 
--- setup customers table following the example above
-
--- TODO: Provide the DDL statment to create this table ALT_SCHOOL.CUSTOMERS
-
--- TODO: provide the command to copy the customers data in the /data folder into ALT_SCHOOL.CUSTOMERS
-
-
-
--- TODO: complete the table DDL statement
-create table if not exists ALT_SCHOOL.ORDERS
+-- Create and populate CUSTOMERS table
+CREATE TABLE IF NOT EXISTS ALT_SCHOOL.CUSTOMERS
 (
-    order_id uuid not null primary key,
-    -- provide the other fields
+    customer_id UUID PRIMARY KEY, -- Unique identifier for each customer
+    device_id UUID NOT NULL, -- Unique identifier for the device used by the customer
+    location VARCHAR(300), -- Location of the customer, allowing up to 300 characters
+    currency CHAR(3) -- Currency code typically represented with 3 characters
 );
 
+-- Import data into CUSTOMERS table from a CSV file
+COPY ALT_SCHOOL.CUSTOMERS (customer_id, device_id, location, currency)
+FROM 'C:\Users\HP\Downloads\customer.csv' DELIMITER ',' CSV HEADER; -- Importing customer data from CSV file
 
--- provide the command to copy orders data into POSTGRES
-
-
-create table if not exists ALT_SCHOOL.LINE_ITEMS
+-- Create ORDERS table
+CREATE TABLE IF NOT EXISTS ALT_SCHOOL.ORDERS
 (
-    line_item_id serial primary key,
-    -- provide the remaining fields
+    order_id UUID PRIMARY KEY, -- Unique identifier for each order
+    customer_id UUID REFERENCES ALT_SCHOOL.CUSTOMERS(customer_id), -- Reference to the customer who placed the order
+    status VARCHAR(30) NOT NULL, -- Status of the order, limited to 30 characters
+    checked_out_at TIMESTAMP WITH TIME ZONE -- Timestamp indicating when the order was checked out, with timezone information
 );
 
+-- Import data into ORDERS table from a CSV file
+COPY ALT_SCHOOL.ORDERS (order_id, customer_id, status, checked_out_at)
+FROM 'C:\Users\HP\Downloads\orders.csv' DELIMITER ',' CSV HEADER; -- Importing order data from CSV file
 
--- provide the command to copy ALT_SCHOOL.LINE_ITEMS data into POSTGRES
-
-
--- setup the events table following the examle provided
-create table if not exists ALT_SCHOOL.EVENTS
+-- Create EVENTS table
+CREATE TABLE IF NOT EXISTS ALT_SCHOOL.EVENTS
 (
-    -- TODO: PROVIDE THE FIELDS
+    event_id SERIAL PRIMARY KEY, -- Unique identifier for each event
+    customer_id UUID REFERENCES ALT_SCHOOL.CUSTOMERS(customer_id), -- Reference to the customer associated with the event
+    event_data JSONB NOT NULL, -- JSONB data type for storing JSON objects representing event data
+    event_timestamp DATE NOT NULL -- Date of the event, without time information
 );
 
--- TODO: provide the command to copy ALT_SCHOOL.EVENTS data into POSTGRES
+-- Import data into EVENTS table from a CSV file
+COPY ALT_SCHOOL.EVENTS (event_id, customer_id, event_data, event_timestamp)
+FROM 'C:\Users\HP\Downloads\events.csv' DELIMITER ',' CSV HEADER; -- Importing event data from CSV file
 
+-- Create LINE_ITEMS table
+CREATE TABLE IF NOT EXISTS ALT_SCHOOL.LINE_ITEMS
+(
+    line_item_id SERIAL PRIMARY KEY, -- Unique identifier for each line item
+    order_id UUID REFERENCES ALT_SCHOOL.ORDERS(order_id), -- Reference to the order to which the line item belongs
+    quantity INTEGER NOT NULL, -- Quantity of the product in the line item, stored as an integer
+    item_id INTEGER -- Assuming item_id is an integer; add REFERENCES if needed
+);
 
-
-
-
-
-
+-- Import data into LINE_ITEMS table from a CSV file
+COPY ALT_SCHOOL.LINE_ITEMS (line_item_id, order_id, quantity, item_id)
+FROM 'C:\Users\HP\Downloads\line_items.csv' DELIMITER ',' CSV HEADER; -- Importing line item data from CSV file
